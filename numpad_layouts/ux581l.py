@@ -9,8 +9,7 @@ rows = 5 # Compared to the more "horizontal" version of the UM433DA (for example
 # Subtract 0.3 (a third key) as the UX581L has about a third key space at the top
 top_offset = 0.3
 
-# The UX582/UX581L numpad answers on I2C bus 1, which bus detection
-# doesn't find reliably on this model.
+# Bus detection is unreliable on UX582/UX581L
 i2c_bus = 1
 
 # Values range from 0 to 255;

@@ -98,8 +98,7 @@ while tries > 0:
 
     sleep(model_layout.try_sleep)
 
-# A layout can set i2c_bus to override the detected bus on models where
-# detection picks the wrong one (e.g. UX582/UX581L).
+# Layouts can pin the I2C bus where detection gets it wrong
 layout_i2c_bus = getattr(model_layout, 'i2c_bus', None)
 if layout_i2c_bus is not None:
     log.debug('Using i2c bus %s from layout instead of detected %s', layout_i2c_bus, device_id)
@@ -330,12 +329,10 @@ while True:
 
             # else numpad mode is activated
             col = math.floor(model_layout.cols * x / (maxx+1) )
-            # top_offset is measured in rows: the dead zone at the top is
-            # top_offset/rows of the pad height. The remaining height is
-            # split evenly so the bottom row is as tall as the others.
+            # Split the pad below the dead zone (top_offset rows) evenly
             dead_zone = model_layout.top_offset / model_layout.rows
             row = math.floor(model_layout.rows * (y / maxy - dead_zone) / (1 - dead_zone))
-            row = min(row, model_layout.rows - 1)  # y == maxy lands on the last row
+            row = min(row, model_layout.rows - 1)  # y == maxy
             # Ignore top_offset region #
             if row < 0:
                 continue

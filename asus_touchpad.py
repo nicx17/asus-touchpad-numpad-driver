@@ -230,6 +230,8 @@ def launch_calculator():
 # icon isn't a calculator can run any command instead. Falls back to the
 # original calculator shortcut when unset, so other layouts are unaffected.
 TOPLEFT_CMD = os.environ.get('ASUS_TOUCHPAD_TOPLEFT_CMD', '').strip()
+# Root has no display; GUI commands must start in the desktop user's session
+TOPLEFT_USER = os.environ.get('ASUS_TOUCHPAD_USER') or os.environ.get('SUDO_USER')
 
 
 def run_top_left_action():
@@ -237,7 +239,12 @@ def run_top_left_action():
         launch_calculator()
         return
     try:
-        subprocess.Popen(shlex.split(TOPLEFT_CMD))
+        cmd = shlex.split(TOPLEFT_CMD)
+        if os.geteuid() == 0 and TOPLEFT_USER:
+            cmd = ['systemd-run', '--user', '--machine=' + TOPLEFT_USER + '@',
+                   '--collect', '--quiet', '--'] + cmd
+        log.debug('Running top-left command %s', cmd)
+        subprocess.Popen(cmd)
     except (OSError, ValueError) as e:
         log.error("Failed to run ASUS_TOUCHPAD_TOPLEFT_CMD %r: %s", TOPLEFT_CMD, e)
 

@@ -152,11 +152,20 @@ do
     esac
 done
 
+# Escape for a quoted systemd Environment= value
+topleft_cmd_unit=${topleft_cmd//\\/\\\\}
+topleft_cmd_unit=${topleft_cmd_unit//\"/\\\"}
+topleft_cmd_unit=${topleft_cmd_unit//%/%%}
+
 echo "Add asus touchpad service in /etc/systemd/system/"
-cat asus_touchpad.service | LAYOUT=$model PERCENTAGE_KEY=$percentage_key TOPLEFT_CMD="$topleft_cmd" DECIMAL_KEY="$decimal_key" envsubst '$LAYOUT $PERCENTAGE_KEY $TOPLEFT_CMD $DECIMAL_KEY' > /etc/systemd/system/asus_touchpad_numpad.service
+cat asus_touchpad.service | LAYOUT=$model PERCENTAGE_KEY=$percentage_key TOPLEFT_CMD="$topleft_cmd_unit" TOPLEFT_USER="$SUDO_USER" DECIMAL_KEY="$decimal_key" envsubst '$LAYOUT $PERCENTAGE_KEY $TOPLEFT_CMD $TOPLEFT_USER $DECIMAL_KEY' > /etc/systemd/system/asus_touchpad_numpad.service
 
 if [ -z "$topleft_cmd" ]; then
-    sed -i '/^Environment=ASUS_TOUCHPAD_TOPLEFT_CMD=/d' /etc/systemd/system/asus_touchpad_numpad.service
+    sed -i '/^Environment="ASUS_TOUCHPAD_TOPLEFT_CMD=/d' /etc/systemd/system/asus_touchpad_numpad.service
+fi
+
+if [ -z "$topleft_cmd" ] || [ -z "$SUDO_USER" ]; then
+    sed -i '/^Environment=ASUS_TOUCHPAD_USER=/d' /etc/systemd/system/asus_touchpad_numpad.service
 fi
 
 if [ -z "$decimal_key" ]; then

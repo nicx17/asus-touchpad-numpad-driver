@@ -123,9 +123,15 @@ ASUS_TOUCHPAD_TOPLEFT_CMD="flameshot gui" LOG=DEBUG sudo -E ./asus_touchpad.py u
 ```
 
 `install.sh` will prompt for this command and store it in the generated systemd unit
-(`/etc/systemd/system/asus_touchpad_numpad.service`) as `Environment=ASUS_TOUCHPAD_TOPLEFT_CMD=...`.
+(`/etc/systemd/system/asus_touchpad_numpad.service`) as `Environment="ASUS_TOUCHPAD_TOPLEFT_CMD=..."`
+(keep the quotes, or systemd drops everything after the first space).
 Leave the prompt blank to keep the calculator behavior. You can change it later by
 editing that line and running `sudo systemctl daemon-reload && sudo systemctl restart asus_touchpad_numpad`.
+
+The service runs as root, which has no access to your desktop, so the command is launched
+in your user session via `systemd-run --user`. `install.sh` stores your user name as
+`Environment=ASUS_TOUCHPAD_USER=...`; when running the script by hand with `sudo -E`,
+`SUDO_USER` is used instead.
 
 **Numpad decimal key sends locale separator by default**
 

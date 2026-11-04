@@ -98,16 +98,17 @@ while tries > 0:
 
     sleep(model_layout.try_sleep)
 
-# IMPLEMENTED: Hardcode I2C bus to 1 for this hardware revision
-device_id = "1"
+# A layout can set i2c_bus to override the detected bus on models where
+# detection picks the wrong one (e.g. UX582/UX581L).
+layout_i2c_bus = getattr(model_layout, 'i2c_bus', None)
+if layout_i2c_bus is not None:
+    log.debug('Using i2c bus %s from layout instead of detected %s', layout_i2c_bus, device_id)
+    device_id = str(layout_i2c_bus)
 
 # Start monitoring the touchpad
 
-import re
-with open('/proc/bus/input/devices', 'r') as f:
-    dev_data = f.read()
-match = re.search(r'Name="ASUE140C:00 04F3:3145 Touchpad".*?Handlers=.*?(event\d+)', dev_data, re.DOTALL)
-event_path = f"/dev/input/{match.group(1)}" if match else "/dev/input/event5"
+event_path = '/dev/input/event' + str(touchpad)
+log.debug('Opening touchpad %s on i2c bus %s', event_path, device_id)
 fd_t = open(event_path, 'rb')
 fcntl(fd_t, F_SETFL, os.O_NONBLOCK)
 d_t = Device(fd_t)
@@ -329,7 +330,12 @@ while True:
 
             # else numpad mode is activated
             col = math.floor(model_layout.cols * x / (maxx+1) )
-            row = math.floor((model_layout.rows * y / maxy) - model_layout.top_offset)
+            # top_offset is measured in rows: the dead zone at the top is
+            # top_offset/rows of the pad height. The remaining height is
+            # split evenly so the bottom row is as tall as the others.
+            dead_zone = model_layout.top_offset / model_layout.rows
+            row = math.floor(model_layout.rows * (y / maxy - dead_zone) / (1 - dead_zone))
+            row = min(row, model_layout.rows - 1)  # y == maxy lands on the last row
             # Ignore top_offset region #
             if row < 0:
                 continue
